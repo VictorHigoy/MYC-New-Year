@@ -1,232 +1,63 @@
 "use client";
 import Image from "next/image";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { REEL_ITEMS, STOP_INDICES, REEL_ASPECT } from "@/utils/constants";
+import { useSlotSound } from "./SlotMachineFunctions";
+import Reel from "./SlotMachineFunctions";
 
-const ITEMS = [
-  { alt: "Iphone", src: "/images/slotMachineSection/Iphone.svg" },
-  { alt: "Angpao", src: "/images/slotMachineSection/Angpao.svg" },
-  { alt: "199 Free Spin", src: "/images/slotMachineSection/199FS.svg" },
-];
+// ─── Main Component ───────────────────────────────────────────────────────────
 
-// Each reel strips: repeat items to create the scroll illusion
-const REEL_ITEMS = [...ITEMS, ...ITEMS, ...ITEMS, ...ITEMS];
-
-function useSlotSound() {
-  const spinRef = useRef<AudioContext | null>(null);
-  const gainRef = useRef<GainNode | null>(null);
-
-  const playSpinSound = () => {
-    const ctx = new AudioContext();
-    spinRef.current = ctx;
-    const gain = ctx.createGain();
-    gainRef.current = gain;
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.connect(ctx.destination);
-
-    const playClick = (time: number) => {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.connect(g);
-      g.connect(gain);
-      osc.frequency.setValueAtTime(300 + Math.random() * 200, time);
-      g.gain.setValueAtTime(0.2, time);
-      g.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
-      osc.start(time);
-      osc.stop(time + 0.05);
-    };
-
-    for (let i = 0; i < 60; i++) {
-      playClick(ctx.currentTime + i * 0.05);
-    }
-
-    return () => {
-      gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-      setTimeout(() => ctx.close(), 300);
-    };
-  };
-
-  const playWinSound = () => {
-    const ctx = new AudioContext();
-    const notes = [523, 659, 784, 1047];
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = freq;
-      osc.type = "sine";
-      const t = ctx.currentTime + i * 0.15;
-      gain.gain.setValueAtTime(0.4, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-      osc.start(t);
-      osc.stop(t + 0.4);
-    });
-  };
-
-  return { playSpinSound, playWinSound };
-}
-
-interface ReelProps {
-  itemSize: number;
-  stopIndex: number;
-  duration: number;
-  delay: number;
-  isAlmostMiss?: boolean;
-  onStop?: () => void;
-}
-
-function Reel({
-  itemSize,
-  stopIndex,
-  duration,
-  delay,
-  isAlmostMiss = false,
-  onStop,
-}: ReelProps) {
-  const [offset, setOffset] = useState(0);
-  const [spinning, setSpinning] = useState(false);
-  const animRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number | null>(null);
-  const stoppedRef = useRef(false);
-
-  // Target: land on stopIndex item (from top of REEL_ITEMS)
-  // We want the reel to scroll so that stopIndex item is visible
-  const targetOffset = -(stopIndex * itemSize);
-  // Start offset: high up (scroll many items)
-  const startOffset = -(REEL_ITEMS.length * itemSize - itemSize);
-
-  useEffect(() => {
-    stoppedRef.current = false;
-    setSpinning(true);
-
-    const totalDistance = Math.abs(targetOffset - startOffset);
-    const almostMissExtra = isAlmostMiss ? itemSize * 0.85 : 0;
-
-    const animate = (timestamp: number) => {
-      if (!startTimeRef.current) startTimeRef.current = timestamp;
-      const elapsed = timestamp - startTimeRef.current - delay * 1000;
-      if (elapsed < 0) {
-        animRef.current = requestAnimationFrame(animate);
-        return;
-      }
-
-      const progress = Math.min(elapsed / (duration * 1000), 1);
-
-      // Easing: fast start, slow end
-      let eased: number;
-      if (isAlmostMiss && progress > 0.75) {
-        // almost miss: overshoot then snap back
-        const subProgress = (progress - 0.75) / 0.25;
-        const overshoot = Math.sin(subProgress * Math.PI) * almostMissExtra;
-        eased = easeOutCubic(Math.min(progress * 1.33, 1));
-        const newOffset = startOffset + totalDistance * eased + overshoot;
-        setOffset(Math.max(newOffset, targetOffset - almostMissExtra));
-      } else {
-        eased = easeOutCubic(progress);
-        setOffset(startOffset + totalDistance * eased);
-      }
-
-      if (progress < 1) {
-        animRef.current = requestAnimationFrame(animate);
-      } else {
-        setOffset(targetOffset);
-        setSpinning(false);
-        if (!stoppedRef.current) {
-          stoppedRef.current = true;
-          onStop?.();
-        }
-      }
-    };
-
-    animRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animRef.current) cancelAnimationFrame(animRef.current);
-    };
-  }, []);
-
-  return (
-    <div
-      style={{
-        height: itemSize,
-        overflow: "hidden",
-        position: "relative",
-      }}
-    >
-      <div
-        style={{
-          transform: `translateY(${offset}px)`,
-          willChange: "transform",
-        }}
-      >
-        {REEL_ITEMS.map((item, i) => (
-          <div
-            key={i}
-            style={{
-              height: itemSize,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Image
-              alt={item.alt}
-              width={150}
-              height={300}
-              src={item.src}
-              style={{ width: "100%", height: "100%", objectFit: "contain" }}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function easeOutCubic(t: number) {
-  return 1 - Math.pow(1 - t, 3);
-}
-
-export default function SlotMachineSection() {
+export default function SlotMachineSection({
+  setSpinning,
+  setClickSpin,
+  spinning,
+}: {
+  setSpinning: (value: boolean) => void;
+  setClickSpin: (value: boolean) => void;
+  spinning: boolean;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [reelHeight, setReelHeight] = useState(300);
-  const [spinning, setSpinning] = useState(false);
-  const [key, setKey] = useState(0);
+  const [spinKey, setSpinKey] = useState(0);
   const stoppedCount = useRef(0);
-  const { playSpinSound, playWinSound } = useSlotSound();
+  const isSpinningRef = useRef(false);
   const stopSpinSoundRef = useRef<(() => void) | null>(null);
+  const { playSpinSound, playWinSound } = useSlotSound();
+  console.log("isSpinningRef", isSpinningRef);
 
+  // responsive reel height
   useEffect(() => {
     const updateHeight = () => {
       if (containerRef.current) {
         const w = containerRef.current.offsetWidth * 0.3;
-        setReelHeight(w * (300 / 150));
+        setReelHeight(w * REEL_ASPECT);
       }
     };
     updateHeight();
-    window.addEventListener("resize", updateHeight);
-    return () => window.removeEventListener("resize", updateHeight);
+    const ro = new ResizeObserver(updateHeight);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
   }, []);
 
-  const handleSpin = () => {
-    if (spinning) return;
-    stoppedCount.current = 0;
-    setSpinning(true);
-    setKey((k) => k + 1);
-    stopSpinSoundRef.current = playSpinSound();
-  };
-
-  const handleReelStop = () => {
+  const handleReelStop = useCallback(() => {
     stoppedCount.current += 1;
     if (stoppedCount.current === 3) {
       stopSpinSoundRef.current?.();
       playWinSound();
       setSpinning(false);
+      isSpinningRef.current = false;
     }
-  };
+  }, [playWinSound]);
 
-  // Final stop indices: land on index 2 (Iphone=0, Angpao=1, 199FS=2) for all — jackpot!
-  const stopIndices = [2, 5, 8]; // different rows but same image (199FS pattern repeat)
+  const handleSpin = useCallback(() => {
+    if (spinning || isSpinningRef.current) return;
+    isSpinningRef.current = true;
+    stoppedCount.current = 0;
+    setSpinning(true);
+    setClickSpin(true);
+    setSpinKey((k) => k + 1);
+    stopSpinSoundRef.current = playSpinSound();
+  }, [spinning, playSpinSound]);
 
   return (
     <div
@@ -243,6 +74,20 @@ export default function SlotMachineSection() {
         height={158}
         src="/images/slotMachineSection/slot-machine-top-border.svg"
         className="w-full absolute -top-2 left-0"
+      />{" "}
+      <Image
+        alt="dice 1"
+        width={286}
+        height={258}
+        src="/images/slotMachineSection/dice-1.svg"
+        className="w-[150px] lg:w-[200px] 2xl:w-[286px] absolute -top-15 2xl:w-[286px]-top-30 left-5 2xl:left-20"
+      />
+      <Image
+        alt="dice 2"
+        width={306}
+        height={227}
+        src="/images/slotMachineSection/dice-2.svg"
+        className="w-[150px] lg:w-[200px] 2xl:w-[306px] absolute bottom-0 2xl:-bottom-20 right-5 2xl:right-20"
       />
       <div className="relative w-[90%] max-w-[800px]">
         <Image
@@ -252,18 +97,32 @@ export default function SlotMachineSection() {
           src="/images/slotMachineSection/slot-machine.svg"
           className="w-full h-auto relative ml-3"
         />
+        <Image
+          alt="chip 1"
+          width={230}
+          height={312}
+          src="/images/slotMachineSection/chip-1.svg"
+          className="w-[120px] xs:w-[150px] lg:w-[170px] xl:w-[230px] absolute -top-35 lg:top-[-40%] xl:top-[-20%] right-0 lg:left-[90%] xl:left-full"
+        />
+        <Image
+          alt="chip 2"
+          width={300}
+          height={295}
+          src="/images/slotMachineSection/chip-2.svg"
+          className="w-[120px] xs:w-[150px] lg:w-[170px] xl:w-[300px] absolute -left-10 lg:-left-30 xl:left-[-30%] -bottom-25 xs:-bottom-20 xl:bottom-[-55%]"
+        />
+        {/* Reels */}
         <div
           ref={containerRef}
-          className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 flex items-center gap-[9%] w-[70%] sm:gap-[8.5%] sm:w-[73%] ml-1.5 sm:ml-1"
+          className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 flex items-center gap-[9%] w-[69%] sm:gap-[8.5%] ml-1.5 sm:ml-1"
         >
-          {[0, 1, 2].map((reelIndex) => (
+          {STOP_INDICES.map((stopIndex, reelIndex) => (
             <div key={reelIndex} className="w-[30%] aspect-[150/300]">
               <Reel
-                key={`${key}-${reelIndex}`}
+                key={`${spinKey}-${reelIndex}`}
                 itemSize={reelHeight}
-                stopIndex={stopIndices[reelIndex]}
+                stopIndex={stopIndex}
                 duration={reelIndex === 2 ? 3 : 1}
-                delay={0}
                 isAlmostMiss={reelIndex === 2}
                 onStop={handleReelStop}
               />
@@ -271,20 +130,28 @@ export default function SlotMachineSection() {
           ))}
         </div>
 
-        {/* Spin button */}
+        {/* Spin Button */}
         <button
           onClick={handleSpin}
           disabled={spinning}
-          className="absolute -bottom-14 left-1/2 -translate-x-1/2 px-8 py-3 rounded-full font-bold text-white text-lg shadow-lg transition-all"
-          style={{
-            background: spinning
-              ? "linear-gradient(135deg, #888, #555)"
-              : "linear-gradient(135deg, #f59e0b, #ef4444)",
-            cursor: spinning ? "not-allowed" : "pointer",
-            transform: "translateX(-50%)",
-          }}
+          className={`absolute left-1/2 w-[60%] ml-2 -translate-x-1/2 top-[93%] transition-all select-none
+            ${spinning ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer"}`}
+          style={{ animation: "pulse-scale 1s ease-in-out infinite" }}
         >
-          {spinning ? "Spinning..." : "SPIN"}
+          <div className="relative">
+            <Image
+              alt="spin now button"
+              width={690}
+              height={153}
+              src="/images/slotMachineSection/spin-now-button.png"
+              className={`w-full h-auto ${spinning ? "brightness-50" : ""}`}
+            />
+            {spinning && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+              </div>
+            )}
+          </div>
         </button>
       </div>
     </div>

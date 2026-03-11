@@ -1,0 +1,46 @@
+import Image from "next/image";
+import React from "react";
+
+export default function WinModal({
+  setOpenForm,
+  setClickSpin,
+  setShowModal,
+}: {
+  setOpenForm: (value: boolean) => void;
+  setClickSpin: (value: boolean) => void;
+  setShowModal: (value: boolean) => void;
+}) {
+  return (
+    <div className="bg-black/60 fixed top-0 left-0 w-screen z-40 h-screen flex items-center justify-center">
+      <div className="max-w-[800px] relative">
+        <div className="pop-in">
+          <Image
+            width={800}
+            height={800}
+            src="/images/modals/win-modal.png"
+            alt="win modal"
+            className="win modal"
+            style={{ animation: "pulse-scale 2.5s ease-in-out infinite" }}
+          />
+          <button
+            className="h-auto cursor-pointer absolute bottom-[14%] left-1/2 -translate-x-1/2  transition-all"
+            style={{ animation: "pulse-scale 2.5s ease-in-out infinite" }}
+            onClick={() => {
+              setShowModal(false);
+              setOpenForm(true);
+              setClickSpin(false);
+            }}
+          >
+            <Image
+              alt="claim button"
+              width={450}
+              height={153}
+              src="/images/modals/claim-button.png"
+              className=""
+            />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

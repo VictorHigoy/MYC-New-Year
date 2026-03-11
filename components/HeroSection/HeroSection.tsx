@@ -35,7 +35,10 @@ export default function HeroSection() {
           src="/images/heroSection/spin-to-lock-text.png"
           className="w-full h-auto"
         />
-        <button className="w-[45%] h-auto cursor-pointer hover:scale-110 transition-all">
+        <button
+          className="w-[45%] h-auto cursor-pointer"
+          style={{ animation: "pulse-scale 2.5s ease-in-out infinite" }}
+        >
           <Image
             alt="try your luck now button"
             width={676}
