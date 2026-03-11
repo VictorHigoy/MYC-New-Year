@@ -1,36 +1,11 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Overview
+A promotional single-page app for BP9's New Year campaign featuring a scroll-locked hero section, an interactive slot machine, and win/registration modals.
 
-## Getting Started
+Layout & Responsive Approach
+All sections use min-h-screen with bg-cover backgrounds and a max-w wrapper to cap content on large screens. Images scale using w-full h-auto or percentage-based widths so everything shrinks proportionally without breakpoints. The slot machine reels are sized dynamically via ResizeObserver so they always match the machine's rendered dimensions at any viewport. Form inputs use clamp() for font size and padding to scale fluidly inside the fixed-size modal. The pop-in entrance animation is defined in globals.css and reused across both modals.
 
-First, run the development server:
+State & Navigation
+All shared state (spinning, showModal, openForm, unlocked) lives in page.tsx and is passed down as props, avoiding the overhead of Context or a state library for a single-page app. On initial load, document.body.style.overflow = "hidden" locks the page. Clicking the hero CTA unlocks scroll, persists the state to localStorage (so refresh doesn't re-lock), and smooth-scrolls to #slot-machine-section.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Assumptions & Tradeoffs
+requestAnimationFrame is used instead of CSS transitions for the reel animation to allow frame-accurate control over easing and the "almost miss" overshoot effect on reel 3. STOP_INDICES are fixed so the wheel always lands on a jackpot, intentional for the promotional context. The form submission uses a setTimeout mock in place of a real API endpoint, which is project-specific and should be replaced.
