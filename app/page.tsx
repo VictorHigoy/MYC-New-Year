@@ -12,6 +12,7 @@ export default function Home() {
   const [spinning, setSpinning] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [openForm, setOpenForm] = useState(false);
+  const [removeHeader, setRemoveHeader] = useState(false);
 
   const [unlocked, setUnlocked] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -52,7 +53,7 @@ export default function Home() {
   return (
     <div>
       <div className="relative min-h-screen overflow-hidden">
-        <Header />
+        {!removeHeader && <Header setRemoveHeader={setRemoveHeader} />}
         <HeroSection onUnlock={handleUnlock} />
       </div>
 
