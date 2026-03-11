@@ -33,6 +33,10 @@ export default function FormModal({
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [loadedCount, setLoadedCount] = useState(0);
+  const totalImages = 2; // form-container + registration-button
+  const allLoaded = loadedCount >= totalImages;
+  const handleImageLoad = () => setLoadedCount((prev) => prev + 1);
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -80,6 +84,7 @@ export default function FormModal({
       <div className="max-w-[500px] relative">
         <div className="relative pop-in">
           <Image
+            onLoad={handleImageLoad}
             width={500}
             height={500}
             src="/images/modals/form-container.png"
@@ -139,6 +144,7 @@ export default function FormModal({
                     </div>
                   ) : (
                     <Image
+                      onLoad={handleImageLoad}
                       alt="registration button"
                       width={500}
                       height={153}

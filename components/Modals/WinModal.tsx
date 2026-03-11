@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export default function WinModal({
   setOpenForm,
@@ -12,8 +12,13 @@ export default function WinModal({
   setShowModal: (value: boolean) => void;
 }) {
   const winAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [loadedCount, setLoadedCount] = useState(0);
+  const totalImages = 2;
+  const allLoaded = loadedCount >= totalImages;
+  const handleImageLoad = () => setLoadedCount((prev) => prev + 1);
 
   useEffect(() => {
+    if (!allLoaded) return;
     winAudioRef.current = new Audio("/audio/win-sound.mp3");
     winAudioRef.current.play();
 
@@ -23,13 +28,14 @@ export default function WinModal({
         winAudioRef.current.currentTime = 0;
       }
     };
-  }, []);
+  }, [allLoaded]);
 
   return (
     <div className="bg-black/60 fixed top-0 left-0 w-screen z-40 h-screen flex items-center justify-center">
       <div className="max-w-[800px] relative">
         <div className="pop-in">
           <Image
+            onLoad={handleImageLoad}
             width={800}
             height={800}
             src="/images/modals/win-modal.png"
@@ -47,6 +53,7 @@ export default function WinModal({
             }}
           >
             <Image
+              onLoad={handleImageLoad}
               alt="claim button"
               width={450}
               height={153}
