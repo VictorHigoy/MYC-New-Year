@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MYC New Year",
   description: "Your New Year Rewards Are Ready",
-  icons: {
-    icon: "/images/Logo.svg",
-  },
+  // icons: {
+  //   icon: "/images/Logo.svg",
+  // },
 };
 
 export default function RootLayout({

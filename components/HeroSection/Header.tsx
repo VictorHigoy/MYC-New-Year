@@ -41,7 +41,7 @@ export default function Header({
             onClick={() => setRemoveHeader(true)}
             className="group cursor-pointer"
           >
-            <p className="text-[8px] sm:text-[12px] group-hover:text-gray-200 group-hover:scale-105 transition-all text-white">
+            <p className="text-[12px] group-hover:text-gray-200 group-hover:scale-105 transition-all text-white">
               X
             </p>
           </button>
