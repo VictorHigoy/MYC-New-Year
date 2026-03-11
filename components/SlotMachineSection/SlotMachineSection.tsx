@@ -2,10 +2,7 @@
 import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { REEL_ITEMS, STOP_INDICES, REEL_ASPECT } from "@/utils/constants";
-import { useSlotSound } from "./SlotMachineFunctions";
 import Reel from "./SlotMachineFunctions";
-
-// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function SlotMachineSection({
   setSpinning,
@@ -21,9 +18,13 @@ export default function SlotMachineSection({
   const [spinKey, setSpinKey] = useState(0);
   const stoppedCount = useRef(0);
   const isSpinningRef = useRef(false);
-  const stopSpinSoundRef = useRef<(() => void) | null>(null);
-  const { playSpinSound, playWinSound } = useSlotSound();
-  console.log("isSpinningRef", isSpinningRef);
+
+  const spinAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    spinAudioRef.current = new Audio("/audio/spin-sound.m4a");
+    spinAudioRef.current.loop = true;
+  }, []);
 
   // responsive reel height
   useEffect(() => {
@@ -42,12 +43,14 @@ export default function SlotMachineSection({
   const handleReelStop = useCallback(() => {
     stoppedCount.current += 1;
     if (stoppedCount.current === 3) {
-      stopSpinSoundRef.current?.();
-      playWinSound();
+      if (spinAudioRef.current) {
+        spinAudioRef.current.pause();
+        spinAudioRef.current.currentTime = 0;
+      }
       setSpinning(false);
       isSpinningRef.current = false;
     }
-  }, [playWinSound]);
+  }, []);
 
   const handleSpin = useCallback(() => {
     if (spinning || isSpinningRef.current) return;
@@ -56,8 +59,13 @@ export default function SlotMachineSection({
     setSpinning(true);
     setClickSpin(true);
     setSpinKey((k) => k + 1);
-    stopSpinSoundRef.current = playSpinSound();
-  }, [spinning, playSpinSound]);
+
+    // play spin sound
+    if (spinAudioRef.current) {
+      spinAudioRef.current.currentTime = 0;
+      spinAudioRef.current.play();
+    }
+  }, [spinning]);
 
   return (
     <div

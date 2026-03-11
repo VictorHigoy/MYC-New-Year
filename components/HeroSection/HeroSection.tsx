@@ -1,7 +1,7 @@
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-export default function HeroSection() {
+export default function HeroSection({ onUnlock }: { onUnlock: () => void }) {
   return (
     <div
       className="relative bg-no-repeat bg-cover bg-center min-h-screen flex items-center justify-center"
@@ -38,6 +38,7 @@ export default function HeroSection() {
         <button
           className="w-[45%] h-auto cursor-pointer"
           style={{ animation: "pulse-scale 2.5s ease-in-out infinite" }}
+          onClick={onUnlock}
         >
           <Image
             alt="try your luck now button"

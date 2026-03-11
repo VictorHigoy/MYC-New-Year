@@ -1,5 +1,6 @@
+"use client";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 export default function WinModal({
   setOpenForm,
@@ -10,6 +11,20 @@ export default function WinModal({
   setClickSpin: (value: boolean) => void;
   setShowModal: (value: boolean) => void;
 }) {
+  const winAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    winAudioRef.current = new Audio("/audio/win-sound.mp3");
+    winAudioRef.current.play();
+
+    return () => {
+      if (winAudioRef.current) {
+        winAudioRef.current.pause();
+        winAudioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
+
   return (
     <div className="bg-black/60 fixed top-0 left-0 w-screen z-40 h-screen flex items-center justify-center">
       <div className="max-w-[800px] relative">

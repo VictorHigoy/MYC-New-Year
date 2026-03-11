@@ -13,6 +13,32 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [openForm, setOpenForm] = useState(false);
 
+  const [unlocked, setUnlocked] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("unlocked") === "true"; // ✅ read on init
+  });
+
+  useEffect(() => {
+    if (!unlocked) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [unlocked]);
+
+  const handleUnlock = () => {
+    setUnlocked(true);
+    localStorage.setItem("unlocked", "true");
+    setTimeout(() => {
+      document
+        .getElementById("slot-machine-section")
+        ?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
+
   console.log("openForm", openForm);
   useEffect(() => {
     if (clickSpin && !spinning) {
@@ -27,14 +53,16 @@ export default function Home() {
     <div>
       <div className="relative min-h-screen overflow-hidden">
         <Header />
-        <HeroSection />
+        <HeroSection onUnlock={handleUnlock} />
       </div>
 
-      <SlotMachineSection
-        setClickSpin={setClickSpin}
-        spinning={spinning}
-        setSpinning={setSpinning}
-      />
+      <div id="slot-machine-section">
+        <SlotMachineSection
+          setClickSpin={setClickSpin}
+          spinning={spinning}
+          setSpinning={setSpinning}
+        />
+      </div>
 
       {showModal && (
         <WinModal
