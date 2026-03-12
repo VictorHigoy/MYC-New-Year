@@ -4,7 +4,7 @@ import Image from "next/image";
 
 // ─── Easing ──────────────────────────────────────────────────────────────────
 
-const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+const easeOutQuint = (t: number) => 1 - Math.pow(1 - t, 8);
 
 export function useSlotSound() {
   const playSpinSound = useCallback(() => {
@@ -92,8 +92,7 @@ const Reel = React.memo(function Reel({
       if (isAlmostMiss && progress > 0.75) {
         const subProgress = (progress - 0.75) / 0.25;
         const overshoot = Math.sin(subProgress * Math.PI) * (itemSize * 0.5);
-        const eased = easeOutCubic(Math.min(progress * 1.33, 1));
-        setOffset(targetOffset + overshoot);
+        const eased = easeOutQuint(Math.min(progress * 1.33, 1));
         setOffset(
           Math.max(
             startOffset + totalDistance * eased + overshoot,
@@ -101,7 +100,7 @@ const Reel = React.memo(function Reel({
           ),
         );
       } else {
-        setOffset(startOffset + totalDistance * easeOutCubic(progress));
+        setOffset(startOffset + totalDistance * easeOutQuint(progress));
       }
 
       if (progress < 1) {

@@ -45,7 +45,7 @@ export default function Home() {
     if (clickSpin && !spinning) {
       const timer = setTimeout(() => {
         setShowModal(true);
-      }, 1000); // 1 second delay
+      });
       return () => clearTimeout(timer);
     }
   }, [clickSpin, spinning, openForm]);

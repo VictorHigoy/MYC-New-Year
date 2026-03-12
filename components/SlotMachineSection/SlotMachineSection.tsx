@@ -3,6 +3,7 @@ import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { REEL_ITEMS, STOP_INDICES, REEL_ASPECT } from "@/utils/constants";
 import Reel from "./SlotMachineFunctions";
+import DelayedReel from "./SlotMachineDelayEffect";
 
 export default function SlotMachineSection({
   setSpinning,
@@ -23,7 +24,7 @@ export default function SlotMachineSection({
 
   useEffect(() => {
     spinAudioRef.current = new Audio("/audio/spin-sound.m4a");
-    spinAudioRef.current.loop = true;
+    spinAudioRef.current.loop = false;
   }, []);
 
   // responsive reel height
@@ -126,12 +127,13 @@ export default function SlotMachineSection({
         >
           {STOP_INDICES.map((stopIndex, reelIndex) => (
             <div key={reelIndex} className="w-[30%] aspect-[150/300]">
-              <Reel
+              <DelayedReel
                 key={`${spinKey}-${reelIndex}`}
+                delay={1500} // all spin freely for 3s first
                 itemSize={reelHeight}
                 stopIndex={stopIndex}
-                duration={reelIndex === 2 ? 3 : 1}
-                isAlmostMiss={reelIndex === 2}
+                duration={reelIndex === 1 ? 3 : reelIndex === 2 ? 5 : 7}
+                isAlmostMiss={false}
                 onStop={handleReelStop}
               />
             </div>
